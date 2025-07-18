@@ -7,6 +7,16 @@
 #include <rom/usb/usb_common.h>
 
 class EspUsbHost {
+  private:
+  struct DeviceType
+  {
+    uint8_t HID = 0x01;
+    uint8_t MSC = 0x02;
+    uint8_t CurrentDeviceType = 0x00;
+  };
+
+  DeviceType deviceType;
+  const char *TAG = "EspUsbHost";
 public:
   bool isReady = false;
   uint8_t interval;
@@ -68,6 +78,13 @@ public:
   static uint8_t getItem(uint8_t val){
     return val & 0xfc;
   }
+
+  // modification i made
+  bool openDevice(const usb_host_client_event_msg_t *eventMsg);
+  bool getDeviceInfo();
+  bool getDeviceDesc();
+  bool getDeviceActiveConfigDesc();
+  esp_err_t hid_host_disable_interface();
 };
 
 #define HID_KEYCODE_TO_ASCII_JA   \
