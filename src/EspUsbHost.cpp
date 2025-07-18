@@ -213,7 +213,6 @@ bool EspUsbHost::openDevice(const usb_host_client_event_msg_t *eventMsg)
   }
   else
   {
-    // usb_host_device_close(clientHandle, deviceHandle); // dont have to close here because it close device entirely
     ESP_LOGI("EspUsbHost", "usb_host_device_open() ESP_OK");
     return true;
   }
@@ -360,6 +359,55 @@ void EspUsbHost::_clientEventCallback(const usb_host_client_event_msg_t *eventMs
   esp_err_t err;
   switch (eventMsg->event) {
     case USB_HOST_CLIENT_EVENT_NEW_DEV:
+    
+    ESP_LOGI("EspUsbHost", "USB_HOST_CLIENT_EVENT_NEW_DEV new_dev.address=%d", eventMsg->new_dev.address);
+    if (!usbHost->openDevice(eventMsg))
+    {
+
+      ESP_LOGI("EspUsbHost", "usb_host_device_open() failed");
+      return;
+    }
+
+    ESP_LOGI("EspUsbHost", "usb_host_device_open() ESP_OK");
+
+    if (!usbHost->getDeviceInfo())
+    {
+      ESP_LOGI("EspUsbHost", "Failed to get device info");
+      return;
+    }
+    ESP_LOGI("EspUsbHost", "Device info retrieved successfully");
+
+    if (!usbHost->getDeviceDesc())
+    {
+      ESP_LOGI("EspUsbHost", "Failed to get device descriptor");
+      return;
+    }
+    ESP_LOGI("EspUsbHost", "Device descriptor retrieved successfully");
+
+    if (!usbHost->getDeviceActiveConfigDesc())
+    {
+      ESP_LOGI("EspUsbHost", "Failed to get active configuration descriptor");
+      return;
+    }
+
+    ESP_LOGI("EspUsbHost", "Active configuration descriptor retrieved successfully currentDeviceType=%d", usbHost->deviceType.CurrentDeviceType);
+
+    if (usbHost->deviceType.CurrentDeviceType == usbHost->deviceType.HID)
+    {
+      usbHost->_configCallback(usbHost->config_desc);
+    }
+    else if (usbHost->deviceType.CurrentDeviceType == usbHost->deviceType.MSC)
+    {
+      ESP_LOGI("EspUsbHost", "Mass Storage Device detected, handling MSC specific logic");
+      // Handle MSC specific logic here if needed
+    }
+    else
+    {
+      ESP_LOGI("EspUsbHost", "Unknown device type, no specific handling implemented");
+    }
+    
+    /*
+    case USB_HOST_CLIENT_EVENT_NEW_DEV:
       ESP_LOGI("EspUsbHost", "USB_HOST_CLIENT_EVENT_NEW_DEV new_dev.address=%d", eventMsg->new_dev.address);
       err = usb_host_device_open(usbHost->clientHandle, eventMsg->new_dev.address, &usbHost->deviceHandle);
       if (err != ESP_OK) {
@@ -460,9 +508,12 @@ void EspUsbHost::_clientEventCallback(const usb_host_client_event_msg_t *eventMs
       }
 
       usbHost->_configCallback(config_desc);
+
+      */
       break;
 
-    case USB_HOST_CLIENT_EVENT_DEV_GONE:
+    
+      case USB_HOST_CLIENT_EVENT_DEV_GONE:
       {
         ESP_LOGI("EspUsbHost", "USB_HOST_CLIENT_EVENT_DEV_GONE dev_gone.dev_hdl=%x", eventMsg->dev_gone.dev_hdl);
         for (int i = 0; i < usbHost->usbTransferSize; i++) {
