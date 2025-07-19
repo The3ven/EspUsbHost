@@ -134,12 +134,14 @@ esp_err_t EspUsbHost::hid_host_disable_interface()
 
 bool EspUsbHost::close(void)
 {
+
   this->closePrecess = true; // set close process to true
   delay(100);
   this->isReady = false; // keep host on idle state for a while
   delay(100);
+  esp_err_t err;
 
-  esp_err_t err = usb_host_client_unblock(this->clientHandle);
+  err = usb_host_client_unblock(this->clientHandle);
 
   if (err != ESP_OK)
   {
@@ -170,15 +172,15 @@ bool EspUsbHost::close(void)
 
     for (int i = 0; i < usbInterfaceSize; i++)
     {
-      err = usb_host_interface_release(clientHandle, deviceHandle, usbInterface[i]);
-      if (err != ESP_OK)
-      {
-        ESP_LOGI("EspUsbHost", "usb_host_interface_release() err=%x, msg=%s, clientHandle=%x, deviceHandle=%x, Interface=%x", err, esp_err_to_message(err), clientHandle, deviceHandle, usbInterface[i]);
-      }
-      else
-      {
-        ESP_LOGI("EspUsbHost", "usb_host_interface_release() ESP_OK, clientHandle=%x, deviceHandle=%x, Interface=%x", clientHandle, deviceHandle, usbInterface[i]);
-      }
+      // err = usb_host_interface_release(clientHandle, deviceHandle, usbInterface[i]);
+      // if (err != ESP_OK)
+      // {
+      //   ESP_LOGI("EspUsbHost", "usb_host_interface_release() err=%x, msg=%s, clientHandle=%x, deviceHandle=%x, Interface=%x", err, esp_err_to_message(err), clientHandle, deviceHandle, usbInterface[i]);
+      // }
+      // else
+      // {
+      //   ESP_LOGI("EspUsbHost", "usb_host_interface_release() ESP_OK, clientHandle=%x, deviceHandle=%x, Interface=%x", clientHandle, deviceHandle, usbInterface[i]);
+      // }
 
       esp_err_t err = usb_host_transfer_free(this->usbTransfer[i]);
       if (err != ESP_OK)
@@ -197,6 +199,20 @@ bool EspUsbHost::close(void)
     }
 
     usbInterfaceSize = 0;
+  }
+
+  err = usb_host_client_deregister(this->clientHandle);
+
+
+  if (err != ESP_OK)
+  {
+    ESP_LOGI("EspUsbHost", "usb_host_client_deregister() err=%x, msg=%s", err, esp_err_to_message(err));
+    return false;
+  }
+  else
+  {
+    ESP_LOGI("EspUsbHost", "usb_host_client_deregister() ESP_OK");
+    this->clientHandle = NULL;
   }
 
   return true;
@@ -581,6 +597,7 @@ void EspUsbHost::_configCallback(const usb_config_desc_t *config_desc) {
     }
   }
 }
+
 
 void EspUsbHost::task(void) {
   esp_err_t err = usb_host_lib_handle_events(1, &this->eventFlags);
@@ -1092,7 +1109,7 @@ void EspUsbHost::setHIDLocal(hid_local_enum_t code) {
 }
 
 esp_err_t EspUsbHost::submitControl(const uint8_t bmRequestType, const uint8_t bDescriptorIndex, const uint8_t bDescriptorType, const uint16_t wInterfaceNumber, const uint16_t wDescriptorLength) {
-  usb_transfer_t *transfer;
+  // usb_transfer_t *transfer;
   usb_host_transfer_alloc(wDescriptorLength + 8 + 1, 0, &transfer);
 
   transfer->num_bytes = wDescriptorLength + 8;

@@ -6,6 +6,9 @@
 #include <class/hid/hid.h>
 #include <rom/usb/usb_common.h>
 
+#define USB_DESC_TYPE_INTERFACE  0x04
+
+
 class EspUsbHost {
   private:
   struct DeviceType
@@ -16,7 +19,9 @@ class EspUsbHost {
   };
 
   DeviceType deviceType;
+  const usb_config_desc_t *config_desc;
   const char *TAG = "EspUsbHost";
+  usb_transfer_t *transfer;
 public:
   bool isReady = false;
   uint8_t interval;
@@ -44,10 +49,12 @@ public:
   uint8_t usbTransferSize;
   uint8_t usbInterface[16];
   uint8_t usbInterfaceSize;
+  bool closePrecess = false;
 
   hid_local_enum_t hidLocal;
 
   void begin(void);
+  bool close(void);
   void task(void);
 
   static void _clientEventCallback(const usb_host_client_event_msg_t *eventMsg, void *arg);
@@ -80,6 +87,7 @@ public:
   }
 
   // modification i made
+  const char *esp_err_to_message(esp_err_t err);
   bool openDevice(const usb_host_client_event_msg_t *eventMsg);
   bool getDeviceInfo();
   bool getDeviceDesc();
