@@ -602,14 +602,14 @@ void EspUsbHost::_configCallback(const usb_config_desc_t *config_desc) {
 void EspUsbHost::task(void) {
   esp_err_t err = usb_host_lib_handle_events(1, &this->eventFlags);
   if (err != ESP_OK && err != ESP_ERR_TIMEOUT) {
-    ESP_LOGI("EspUsbHost", "usb_host_lib_handle_events() err=%x eventFlags=%x", err, this->eventFlags);
+    ESP_LOGI("EspUsbHost", "usb_host_lib_handle_events() err=%x eventFlags=%x, msg=%s", err, this->eventFlags, esp_err_to_message(err));
   }
 
   if (!this->closePrecess && this->clientHandle != NULL)
   { 
     err = usb_host_client_handle_events(this->clientHandle, 1);
     if (err != ESP_OK && err != ESP_ERR_TIMEOUT) {
-      ESP_LOGI("EspUsbHost", "usb_host_client_handle_events() err=%x", err);
+      ESP_LOGI("EspUsbHost", "usb_host_client_handle_events() err=%x, msg=%s", err, esp_err_to_message(err));
     }
   }
 
@@ -625,7 +625,7 @@ void EspUsbHost::task(void) {
 
         esp_err_t err = usb_host_transfer_submit(this->usbTransfer[i]);
         if (err != ESP_OK && err != ESP_ERR_NOT_FINISHED && err != ESP_ERR_INVALID_STATE) {
-          //ESP_LOGI("EspUsbHost", "usb_host_transfer_submit() err=%x", err);
+          ESP_LOGI("EspUsbHost", "usb_host_transfer_submit() err=%x, msg=%s", err, esp_err_to_message(err));
         }
       }
     }
